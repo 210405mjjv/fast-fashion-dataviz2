@@ -1,8 +1,8 @@
 let animateLineChart = () => {};
 
 const colors2 = {
-  generation: "#ff7033",
-  landfill:   "#97A12B",
+  generation: "#BD153F",
+  landfill:   "#690249",
   connector:  "#c0a898",
   text:       "#1C1D21",      // carbon black
   muted:      "#1C1D21",
@@ -54,14 +54,11 @@ d3.csv("JMM429 Project data - Clean Textile production (1).csv").then(data => {
     .call(g => g.select(".domain").remove());
 
   // ── Title ──────────────────────────────────────────────────────
-  svg2.append("text")
-    .attr("x", width2 / 2)
-    .attr("y", -20)
-    .attr("text-anchor", "middle")
-    .style("font-size", "16px")
-    .style("font-weight", "bold")
-    .style("fill", colors2.text)
-    .text("Textile Generation vs Landfilling in Thousand Tons");
+  addSvgTagTitle(
+    svg2,
+    width2 / 2, -20,
+    "What We Make And What We Throw Away: Generation vs Landfill in Thousand Tonnes"
+  );
 
   // ── Generation path ────────────────────────────────────────────
   const genPathData = data.map(d => [x(d.Year), y(d.Generation)]);
@@ -108,26 +105,33 @@ d3.csv("JMM429 Project data - Clean Textile production (1).csv").then(data => {
     .attr("cx", d => x(d.Year)).attr("cy", d => y(d.Landfilled))
     .attr("r", 4).attr("fill", colors2.landfill).attr("opacity", 0);
 
-  // ── Labels (appear with first dot of each phase) ───────────────
-  const labelGen = svg2.append("text")
-    .attr("class", "label-gen")
-    .attr("x", x(data[1].Year))
-    .attr("y", y(data[1].Generation) - 12)
-    .attr("text-anchor", "middle")
-    .style("font-size", "12px").style("font-weight", "600")
-    .style("fill", colors2.generation)
-    .attr("opacity", 0)
-    .text("Generated");
+  
+  // Line labels
+const last = data[data.length - 3];
 
-  const labelLandfill = svg2.append("text")
-    .attr("class", "label-landfill")
-    .attr("x", x(data[0].Year))
-    .attr("y", y(data[0].Landfilled) - 12)
-    .attr("text-anchor", "middle")
-    .style("font-size", "12px").style("font-weight", "600")
-    .style("fill", colors2.landfill)
-    .attr("opacity", 0)
-    .text("Landfilled");
+// Generation label (top right of orange line)
+const labelGen = svg2.append("text")
+  .attr("class", "label-gen")
+  .attr("x", x(last.Year) - 30) // slight left offset
+  .attr("y", y(last.Generation) - 30)
+  .attr("text-anchor", "start")
+  .style("font-size", "12px")
+  .style("font-weight", "600")
+  .style("fill", colors2.generation)
+  .attr("opacity", 0)
+  .text("Generated");
+
+// Landfill label (top right of green line)
+const labelLandfill = svg2.append("text")
+  .attr("class", "label-landfill")
+  .attr("x", x(last.Year) - 30)
+  .attr("y", y(last.Landfilled) - 30)
+  .attr("text-anchor", "start")
+  .style("font-size", "12px")
+  .style("font-weight", "600")
+  .style("fill", colors2.landfill)
+  .attr("opacity", 0)
+  .text("Landfilled");
 
   // ── Scroll-driven animation ────────────────────────────────────
   // The section has extra scroll height (set in CSS via min-height on s-production)
@@ -169,3 +173,63 @@ d3.csv("JMM429 Project data - Clean Textile production (1).csv").then(data => {
   }
 
 });
+
+function addSvgTagTitle(svg, centerX, y, titleText) {
+  const paddingLeft = 28;
+  const paddingRight = 18;
+  const paddingY = 8;
+  const holeRadius = 5;
+  const holeOffset = 10;
+
+  const titleGroup = svg.append("g")
+    .attr("class", "svg-tag-title");
+
+  const text = titleGroup.append("text")
+    .attr("x", centerX + holeOffset)
+    .attr("y", y)
+    .attr("text-anchor", "middle")
+    .attr("dominant-baseline", "middle")
+    .style("font-family", "var(--font-sans)")
+    .style("font-size", "14px")
+    .style("font-weight", "700")
+    .style("fill", "#211C1C")
+    .text(titleText);
+
+  const bbox = text.node().getBBox();
+
+  const tagX = bbox.x - paddingLeft;
+  const tagY = bbox.y - paddingY;
+  const tagW = bbox.width + paddingLeft + paddingRight;
+  const tagH = bbox.height + paddingY * 2;
+
+  const holeX = tagX + 14;
+  const holeY = tagY + tagH / 2;
+
+  titleGroup.insert("rect", "text")
+    .attr("x", tagX)
+    .attr("y", tagY)
+    .attr("width", tagW)
+    .attr("height", tagH)
+    .attr("rx", 8)
+    .attr("fill", "#fffaf4")
+    .attr("stroke", "#d8cbbb")
+    .attr("stroke-width", 1.5);
+
+  titleGroup.insert("circle", "text")
+    .attr("cx", holeX)
+    .attr("cy", holeY)
+    .attr("r", holeRadius)
+    .attr("fill", "#eee7dc")
+    .attr("stroke", "#cdbba7")
+    .attr("stroke-width", 1.5);
+
+  // string — appended last so it sits on top of the tag
+  titleGroup.append("line")
+    .attr("x1", holeX)
+    .attr("y1", holeY - holeRadius)
+    .attr("x2", holeX + 2)
+    .attr("y2", tagY - 18)
+    .attr("stroke", "#c9a98f")
+    .attr("stroke-width", 3)
+    .attr("stroke-linecap", "round");
+}
